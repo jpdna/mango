@@ -14,6 +14,28 @@
   <name>mango-core: an ADAM-based genomics visualization toolkit</name>
   <build>
     <plugins>
+
+      <plugin>
+        <groupId>com.squareup.wire</groupId>
+        <artifactId>wire-maven-plugin</artifactId>
+        <version>2.2.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate-sources</goal>
+            </goals>
+            <configuration>
+              <protoFiles>
+                <param>common.proto</param>
+                <param>variants.proto</param>
+              </protoFiles>
+
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.scalatest</groupId>
         <artifactId>scalatest-maven-plugin</artifactId>
@@ -145,6 +167,11 @@
       <groupId>org.seqdoop</groupId>
       <artifactId>hadoop-bam</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.wire</groupId>
+      <artifactId>wire-runtime</artifactId>
+      <version>2.2.0</version>
     </dependency>
   </dependencies>
 </project>
