@@ -101,6 +101,13 @@
     <testOutputDirectory>target/scala-${scala.version}/test-classes</testOutputDirectory>
     <pluginManagement>
       <plugins>
+
+        <plugin>
+          <groupId>com.squareup.wire</groupId>
+          <artifactId>wire-maven-plugin</artifactId>
+          <version>${wire.version}</version>
+        </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
@@ -606,6 +613,16 @@
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java-util</artifactId>
         <version>3.2.0</version>
+      </dependency>
+     <!-- <dependency>
+        <groupId>com.squareup.wire</groupId>
+        <artifactId>wire</artifactId>
+        <version>2.2.0</version>
+      </dependency> -->
+      <dependency>
+        <groupId>com.squareup.wire</groupId>
+        <artifactId>wire-runtime</artifactId>
+        <version>2.2.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
