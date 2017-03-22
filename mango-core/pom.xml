@@ -27,8 +27,8 @@
             </goals>
             <configuration>
               <protoFiles>
-                <param>common.proto</param>
-                <param>variants.proto</param>
+                <param>ga4gh/common.proto</param>
+                <param>ga4gh/variants.proto</param>
               </protoFiles>
 
             </configuration>
@@ -172,6 +172,16 @@
       <groupId>com.squareup.wire</groupId>
       <artifactId>wire-runtime</artifactId>
       <version>2.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>3.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java-util</artifactId>
+      <version>3.2.0</version>
     </dependency>
   </dependencies>
 </project>
