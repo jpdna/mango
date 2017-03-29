@@ -582,6 +582,24 @@
         <artifactId>snappy-java</artifactId>
         <version>${snappy.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.ga4gh</groupId>
+        <artifactId>ga4gh-schemas</artifactId>
+        <version>0.6.0j10-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>3.2.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java-util</artifactId>
+        <version>3.2.0</version>
+      </dependency>
+
+
     </dependencies>
   </dependencyManagement>
 
