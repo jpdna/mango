@@ -77,6 +77,8 @@ abstract class LazyMaterialization[T: ClassTag](name: String,
    */
   def stringify(rdd: RDD[(String, T)]): Map[String, String]
 
+  //val x: (RDD[(String, T)]) => Map[String, String] = stringify
+
   /**
    * Sets partitioner
    * @return partitioner

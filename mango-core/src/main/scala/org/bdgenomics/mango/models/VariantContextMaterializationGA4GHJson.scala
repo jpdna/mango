@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/*
+
 package org.bdgenomics.mango.models
 
 import java.io.{ PrintWriter, StringWriter }
@@ -40,11 +42,11 @@ import scala.collection.{ Map, mutable }
  * Handles loading and tracking of data from persistent storage into memory for Variant data.
  * @see LazyMaterialization.scala
  */
-class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
+class VariantContextMaterializationGA4GHJson(@transient sc: SparkContext,
                                          files: List[String],
                                          sd: SequenceDictionary,
                                          prefetchSize: Option[Int] = None)
-    extends LazyMaterialization[ga4gh.Variants.Variant]("VariantContextRDD", sc, files, sd, prefetchSize)
+    extends LazyMaterialization[String]("VariantContextRDD", sc, files, sd, prefetchSize)
     with Serializable {
 
   @transient implicit val formats = net.liftweb.json.DefaultFormats
@@ -202,7 +204,7 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
  * VariantContextMaterialization object, used to load VariantContext data into a VariantContextRDD. Supported file
  * formats are vcf and adam.
  */
-object VariantContextMaterializationGA4GH {
+object VariantContextMaterializationGA4GHJson {
 
   /**
    * Loads variant data from adam and vcf files into a VariantContextRDD
@@ -286,3 +288,5 @@ object VariantContextMaterializationGA4GH {
 
 }
 
+
+*/
