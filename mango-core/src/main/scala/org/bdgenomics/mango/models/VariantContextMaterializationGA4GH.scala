@@ -31,10 +31,8 @@ import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.variant.VariantContextRDD
 import org.bdgenomics.formats.avro.{ GenotypeAllele, Variant }
 import org.bdgenomics.mango.layout.GenotypeJson
-import ga4gh.Variants.Variant
+import ga4gh.Variants.{ Variant => GA4GHVariant }
 import org.bdgenomics.mango.core.util.GA4GHUtil
-
-import scala.collection.{ Map, mutable }
 
 /*
  * Handles loading and tracking of data from persistent storage into memory for Variant data.
@@ -44,7 +42,7 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
                                          files: List[String],
                                          sd: SequenceDictionary,
                                          prefetchSize: Option[Int] = None)
-    extends LazyMaterialization[ga4gh.Variants.Variant]("VariantContextRDD", sc, files, sd, prefetchSize)
+    extends LazyMaterialization[GA4GHVariant]("VariantContextRDD", sc, files, sd, prefetchSize)
     with Serializable {
 
   @transient implicit val formats = net.liftweb.json.DefaultFormats
@@ -56,8 +54,8 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
    *
    * @return extracted ReferenceRegion
    */
-  //def getReferenceRegion = (g: ga4gh.Variants.Variant) => { ReferenceRegion(g.)
-  def getReferenceRegion = (g: ga4gh.Variants.Variant) => { ReferenceRegion(GA4GHUtil.GA4GHVariantToBDG(g)) }
+  //def getReferenceRegion = (g: GA4GHVariant) => { ReferenceRegion(g.)
+  def getReferenceRegion = (g: GA4GHVariant) => { ReferenceRegion(GA4GHUtil.GA4GHVariantToBDG(g)) }
 
   /**
    * Loads VariantContext Data into GenotypeJson format
@@ -79,8 +77,8 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
     g.copy()
   } */
 
-  def setContigName = (g: ga4gh.Variants.Variant, contig: String) => {
-    ga4gh.Variants.Variant.newBuilder(g).setReferenceName(contig).build()
+  def setContigName = (g: GA4GHVariant, contig: String) => {
+    GA4GHVariant.newBuilder(g).setReferenceName(contig).build()
   }
 
   /**
@@ -101,7 +99,7 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
   }
   */
 
-  def stringify(data: RDD[(String, ga4gh.Variants.Variant)]): Map[String, String] = {
+  def stringify(data: RDD[(String, GA4GHVariant)]): Map[String, String] = {
 
     val flattened: Map[String, Array[String]] = data
       .collect
@@ -112,20 +110,20 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
     p
   }
 
-  //val x: (RDD[(String, ga4gh.Variants.Variant)]) => Map[String, String] = stringify
+  //val x: (RDD[(String, GA4GHVariant)]) => Map[String, String] = stringify
 
-  // def stringify(data: RDD[(String, ga4gh.Variants.Variant)]): Map[String, String] = {
+  // def stringify(data: RDD[(String, GA4GHVariant)]): Map[String, String] = {
 
   /*
     val flattened: Map[String, Array[String]] = data
       .collect
-      .groupBy(_._1).map(r => (r._1, r._2.map( (x:String, y: ga4gh.Variants.Variant) =>
+      .groupBy(_._1).map(r => (r._1, r._2.map( (x:String, y: GA4GHVariant) =>
                                  //_._2.toString()
       { com.google.protobuf.util.JsonFormat.printer().print(y)  }
                                                     )))
     */
 
-  //val x: RDD[(String, String)] = data.map((x: (String, ga4gh.Variants.Variant)) => { (x._1, com.google.protobuf.util.JsonFormat.printer().print(x._2)) })
+  //val x: RDD[(String, String)] = data.map((x: (String, GA4GHVariant)) => { (x._1, com.google.protobuf.util.JsonFormat.printer().print(x._2)) })
   // val y: Map[String, String] = x.collectAsMap()
   // y
 
@@ -134,7 +132,7 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
   //var states: mutable.Map[String, String] = scala.collection.mutable.Map("AL" -> "Alabama")
   //states
 
-  //val x: Map[String, String] = data.map((x: String, y: ga4gh.Variants.Variant) => { ( x, com.google.protobuf.util.JsonFormat.printer().print(y) } ).collect
+  //val x: Map[String, String] = data.map((x: String, y: GA4GHVariant) => { ( x, com.google.protobuf.util.JsonFormat.printer().print(y) } ).collect
   // write variants to json
   //flattened.mapValues(write(_))
   // }
@@ -151,9 +149,9 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
               showGenotypes: Boolean,
               binning: Int = 1): Map[String, String] = {
     //val data: RDD[(String, GenotypeJson)] = get(region)
-    val data: RDD[(String, ga4gh.Variants.Variant)] = get(region)
+    val data: RDD[(String, GA4GHVariant)] = get(region)
 
-    val binnedData: RDD[(String, ga4gh.Variants.Variant)] =
+    val binnedData: RDD[(String, GA4GHVariant)] =
       if (binning <= 1) {
         if (!showGenotypes)
           //data.map(r => (r._1, GenotypeJson(r._2.variant, null)))
@@ -273,11 +271,11 @@ object VariantContextMaterializationGA4GH {
    * @param v VariantContextRDD to Convert
    * @return Converted json RDD
    */
-  private def toGA4GHVariantRDD(v: VariantContextRDD): RDD[ga4gh.Variants.Variant] = {
+  private def toGA4GHVariantRDD(v: VariantContextRDD): RDD[GA4GHVariant] = {
     v.rdd.map(r => {
       // filter out genotypes with only reference alleles
       val genotypes = r.genotypes.filter(_.getAlleles.toArray.filter(_ != GenotypeAllele.REF).length > 0)
-      val x_builder = ga4gh.Variants.Variant.newBuilder()
+      val x_builder = GA4GHVariant.newBuilder()
       x_builder.setEnd(r.variant.variant.getEnd)
       x_builder.build()
 
