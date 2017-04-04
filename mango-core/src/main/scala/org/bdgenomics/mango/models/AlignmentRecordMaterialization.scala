@@ -30,6 +30,8 @@ import org.bdgenomics.adam.projections.{ AlignmentRecordField, Projection }
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.read.AlignmentRecordRDD
 import org.bdgenomics.formats.avro.AlignmentRecord
+//import org.bdgenomics.formats.avro.VariantCo
+import org.bdgenomics.adam.models.VariantContext
 import org.bdgenomics.mango.converters.GA4GHConverter
 import org.bdgenomics.mango.layout.PositionCount
 import org.bdgenomics.utils.misc.Logging
