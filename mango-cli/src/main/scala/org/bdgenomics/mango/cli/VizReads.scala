@@ -552,6 +552,9 @@ class VizServlet extends ScalatraServlet {
           //val ga4ghVariantJSONString = GA4GHutils.genotypeStringJsonToGA4GH(results.get, VizReads.currVariantPaths)
 
           //Ok(ga4ghVariantJSONString)
+
+          //val vcResult: String = results.get
+
           Ok(results.get)
           // extract variants only and parse to stringified json
           //Ok(results.get)

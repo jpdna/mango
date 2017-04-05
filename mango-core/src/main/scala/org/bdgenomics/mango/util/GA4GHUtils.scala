@@ -9,6 +9,7 @@ import ga4gh.Variants.Variant
 import scala.collection.JavaConverters._
 import com.google.protobuf.util.JsonFormat.Printer
 
+/*
 case class GA4GHVariantJson(id: String = "",
                             variant_set_id: String = "",
                             names: Array[String] = new Array[String](0), // this will be changed to a List[String]
@@ -19,6 +20,7 @@ case class GA4GHVariantJson(id: String = "",
                             alternate_bases: String = "",
                             created: Long = 0,
                             updated: Long = 0)
+                            */
 
 case class SearchVariantsRequestGA4GH(variantSetId: String,
                                       start: String,
@@ -28,10 +30,13 @@ case class SearchVariantsRequestGA4GH(variantSetId: String,
                                       referenceName: String,
                                       callSetIds: Array[String] = new Array[String](0))
 
-case class SearchVariantsResponseGA4GH(variants: Array[GA4GHVariantJson] = new Array[GA4GHVariantJson](0),
-                                       next_page_token: String = "")
+//case class SearchVariantsResponseGA4GH(variants: Array[GA4GHVariantJson] = new Array[GA4GHVariantJson](0),
+//                                       next_page_token: String = "")
 
 object GA4GHutils {
+
+  // code below was earlier approach - to be deleted soon.
+  /*
   def genotypeStringJsonToGA4GH(genotypeStringJSON: String, datasetkey: String): String = {
     val parsedJSON: Seq[JValue] = net.liftweb.json.parse(genotypeStringJSON).children
 
@@ -88,4 +93,6 @@ object GA4GHutils {
 
     ga4ghVariantJSONString
   }
+
+  */
 }

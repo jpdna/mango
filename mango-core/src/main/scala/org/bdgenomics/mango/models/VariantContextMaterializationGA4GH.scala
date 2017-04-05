@@ -27,10 +27,14 @@ import org.apache.spark.rdd.RDD
 import org.bdgenomics.adam.models.{ ReferenceRegion, SequenceDictionary }
 import org.bdgenomics.adam.projections.{ Projection, VariantField }
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.variant.{ VariantContextRDD }
-import org.bdgenomics.formats.avro.{ Variant, GenotypeAllele }
+import org.bdgenomics.adam.rdd.variant.VariantContextRDD
+import org.bdgenomics.formats.avro.{ GenotypeAllele, Variant }
 import org.bdgenomics.mango.layout.GenotypeJson
 import org.bdgenomics.adam.models.VariantContext
+import ga4gh.VariantServiceOuterClass.{ SearchCallSetsResponse, SearchVariantsResponse }
+import org.bdgenomics.mango.converters.GA4GHConverter
+
+import scala.collection.JavaConverters._
 
 /*
  * Handles loading and tracking of data from persistent storage into memory for Variant data.
@@ -88,10 +92,19 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
       .collect
       .groupBy(_._1).map(r => (r._1, r._2.map(_._2)))
 
+    val variantsGA4GH: Map[String, List[ga4gh.Variants.Variant]] = flattened.mapValues(l => l.map(r => GA4GHConverter.toGA4GHVariant(r)).toList)
 
+    val result: Map[String, SearchVariantsResponse] = variantsGA4GH.mapValues(v => {
+      ga4gh.VariantServiceOuterClass.SearchVariantsResponse.newBuilder()
+        .addAllVariants(v.asJava).build()
+    })
 
-    // write variants to json
-    flattened.mapValues(write(_))
+    val resultJson: Map[String, String] = result.mapValues(v => {
+      com.google.protobuf.util.JsonFormat.printer().print(v)
+    })
+
+    resultJson
+
   }
 
   /**
@@ -104,6 +117,7 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
   def getJson(region: ReferenceRegion,
               showGenotypes: Boolean,
               binning: Int = 1): Map[String, String] = {
+
     val data: RDD[(String, VariantContext)] = get(region)
 
     val binnedData: RDD[(String, VariantContext)] =
