@@ -491,39 +491,6 @@ class VizServlet extends ScalatraServlet {
       val key: String = "ALL_chr17_7500000-7515000_phase3_shapeit2_mvncall_integrated_v5a_20130502_genotypes_vcf"
       contentType = "json"
 
-      /*
-      val dictOpt = VizReads.globalDict(viewRegion.referenceName)
-      if (dictOpt.isDefined) {
-        var results: Option[String] = None
-        val binning: Int =
-          try {
-            params("binning").toInt
-          } catch {
-            case e: Exception => 1
-          }
-        VizReads.variantsWait.synchronized {
-          // region was already collected, grab from cache
-          if (VizCacheIndicator(viewRegion, binning) != VizReads.variantsIndicator) {
-            println("\n### About to call getJson in the cache thing\n")
-            VizReads.variantsCache = VizReads.variantContextData.get.getJson(viewRegion,
-              true,
-              1)
-            VizReads.variantsIndicator = VizCacheIndicator(viewRegion, binning)
-          }
-          results = VizReads.variantsCache.get(key)
-        }
-
-        if (results.isDefined) {
-          val ga4ghVariantJSONString = GA4GHutils.genotypeStringJsonToGA4GH(results.get, VizReads.currVariantPaths)
-
-          Ok(ga4ghVariantJSONString)
-          // extract variants only and parse to stringified json
-          //Ok(results.get)
-        } else VizReads.errors.noContent(viewRegion)
-      } else VizReads.errors.outOfBounds
-      */
-
-      println("#### checkpint 2")
       val dictOpt = VizReads.globalDict(viewRegion.referenceName)
       if (dictOpt.isDefined) {
         var results: Option[String] = None
@@ -546,18 +513,11 @@ class VizServlet extends ScalatraServlet {
           println("#### about to call results")
           results = VizReads.variantsCache.get(key)
         }
-        println("### checkpoint 2")
 
         if (results.isDefined) {
-          //val ga4ghVariantJSONString = GA4GHutils.genotypeStringJsonToGA4GH(results.get, VizReads.currVariantPaths)
-
-          //Ok(ga4ghVariantJSONString)
-
-          //val vcResult: String = results.get
 
           Ok(results.get)
-          // extract variants only and parse to stringified json
-          //Ok(results.get)
+
         } else VizReads.errors.noContent(viewRegion)
       } else VizReads.errors.outOfBounds
 
