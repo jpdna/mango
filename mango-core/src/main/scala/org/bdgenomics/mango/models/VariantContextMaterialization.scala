@@ -79,6 +79,7 @@ class VariantContextMaterialization(@transient sc: SparkContext,
    * N
    */
   def stringify(data: RDD[(String, GenotypeJson)]): Map[String, String] = {
+    println("#### data: " + data.collect.toString())
 
     val flattened: Map[String, Array[String]] = data
       .collect
@@ -106,6 +107,7 @@ class VariantContextMaterialization(@transient sc: SparkContext,
           data.map(r => (r._1, GenotypeJson(r._2.variant, null)))
         else data
       } else {
+
         bin(data, binning)
           .map(r => {
             // Reset variant to match binned region

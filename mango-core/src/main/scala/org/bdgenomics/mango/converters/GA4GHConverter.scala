@@ -27,7 +27,7 @@ import ga4gh.Variants.Call
 import ga4gh.{ Common, Variants }
 import htsjdk.samtools.{ CigarOperator, TextCigarCodec }
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.formats.avro.{ AlignmentRecord, Genotype, GenotypeAllele }
+import org.bdgenomics.formats.avro.{ AlignmentRecord, Genotype, GenotypeAllele, Feature }
 import org.ga4gh._
 
 import scala.collection.JavaConversions._
@@ -350,6 +350,17 @@ object GA4GHConverter extends Serializable {
       .setCallSetId("CallsetID stub")
       .setGenotype(calls)
       .build()
+
+  }
+
+  def toGA4GHFeature(record: Feature): ga4gh.SequenceAnnotations.Feature = {
+    ga4gh.SequenceAnnotations.Feature.newBuilder()
+      .setStart(record.getStart)
+      .setEnd(record.getEnd)
+      .setReferenceName(record.getContigName)
+      .setAttributes(Common.Attributes.newBuilder()
+        .putAttr("Score", Common.AttributeValueList.newBuilder()
+          .addValues(0, Common.AttributeValue.newBuilder().setInt64Value(record.getScore.toLong)).build())).build()
 
   }
 

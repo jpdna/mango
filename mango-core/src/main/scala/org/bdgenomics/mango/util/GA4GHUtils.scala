@@ -28,7 +28,24 @@ case class SearchVariantsRequestGA4GH(variantSetId: String,
                                       pageSize: String,
                                       pageToken: String,
                                       referenceName: String,
-                                      callSetIds: Array[String] = new Array[String](0))
+                                      callSetIds: Array[String] = new Array[String](0),
+                                      binning: String = "1") {
+  def this(variantSetId: String,
+           start: String,
+           end: String,
+           pageSize: String,
+           pageToken: String,
+           referenceName: String,
+           callSetIds: Array[String]) = {
+    this(variantSetId: String,
+      start: String,
+      end: String,
+      pageSize: String,
+      pageToken: String,
+      referenceName: String,
+      callSetIds: Array[String], "1")
+  }
+}
 
 //case class SearchVariantsResponseGA4GH(variants: Array[GA4GHVariantJson] = new Array[GA4GHVariantJson](0),
 //                                       next_page_token: String = "")

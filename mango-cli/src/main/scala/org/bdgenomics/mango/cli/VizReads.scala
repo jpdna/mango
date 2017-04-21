@@ -476,7 +476,7 @@ class VizServlet extends ScalatraServlet {
 
     val jsonPostString = request.body
 
-    val searchVariantsRequest = net.liftweb.json.parse(jsonPostString)
+    val searchVariantsRequest: SearchVariantsRequestGA4GH = net.liftweb.json.parse(jsonPostString)
       .extract[SearchVariantsRequestGA4GH]
 
     if (!VizReads.variantsExist)
@@ -496,7 +496,8 @@ class VizServlet extends ScalatraServlet {
         var results: Option[String] = None
         val binning: Int =
           try {
-            params("binning").toInt
+            //params("binning").toInt
+            searchVariantsRequest.binning.toInt
           } catch {
             case e: Exception => 1
           }
@@ -506,7 +507,7 @@ class VizServlet extends ScalatraServlet {
             println("\n### About to call getJson in the cache thing\n")
             VizReads.variantsCache = VizReads.variantContextDataGA4GH.get.getJson(viewRegion,
               true,
-              1)
+              binning)
             println("### Done calling Json cache thing")
             VizReads.variantsIndicator = VizCacheIndicator(viewRegion, binning)
           }

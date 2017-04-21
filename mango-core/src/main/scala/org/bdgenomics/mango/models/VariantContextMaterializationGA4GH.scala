@@ -19,6 +19,7 @@ package org.bdgenomics.mango.models
 
 import java.io.{ PrintWriter, StringWriter }
 
+import ga4gh.SequenceAnnotationServiceOuterClass.SearchFeaturesResponse
 import net.liftweb.json.Serialization.write
 import org.apache.parquet.filter2.dsl.Dsl._
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -28,7 +29,7 @@ import org.bdgenomics.adam.models.{ ReferenceRegion, SequenceDictionary }
 import org.bdgenomics.adam.projections.{ Projection, VariantField }
 import org.bdgenomics.adam.rdd.ADAMContext._
 import org.bdgenomics.adam.rdd.variant.VariantContextRDD
-import org.bdgenomics.formats.avro.{ GenotypeAllele, Variant }
+import org.bdgenomics.formats.avro.{ Feature, GenotypeAllele, Variant }
 import org.bdgenomics.mango.layout.GenotypeJson
 import org.bdgenomics.adam.models.VariantContext
 import ga4gh.VariantServiceOuterClass.{ SearchCallSetsResponse, SearchVariantsResponse }
@@ -107,7 +108,121 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
 
   }
 
+  def stringifyFeature(data: collection.Seq[(String, Feature)]): Map[String, String] = {
+    val flattened = data
+      .groupBy(_._1).map(r => (r._1, r._2.map(_._2)))
+
+    val featureGA4GH = flattened.mapValues(l => l.map(r => GA4GHConverter.toGA4GHFeature(r)).toList)
+
+    val result: Map[String, SearchFeaturesResponse] = featureGA4GH.mapValues(v => {
+      ga4gh.SequenceAnnotationServiceOuterClass.SearchFeaturesResponse.newBuilder()
+        .addAllFeatures(v.asJava).build()
+    })
+
+    val resultJson: Map[String, String] = result.mapValues(v => {
+      com.google.protobuf.util.JsonFormat.printer().print(v)
+    })
+
+    resultJson
+
+  }
+
+  def binRegionVars(r: ReferenceRegion, binning: Int): ReferenceRegion = {
+    val start = r.start - (r.start % binning)
+    r.copy(start = start, end = (start + binning))
+  }
+
+  def binVars(rdd: RDD[(String, VariantContext)], binning: Int): collection.Map[(String, ReferenceRegion), Long] = {
+    val step1: RDD[((String, ReferenceRegion), VariantContext)] = rdd.map(r => ((r._1, binRegionVars(getReferenceRegion(r._2), binning)), r._2))
+    val step2: collection.Map[(String, ReferenceRegion), Long] = step1.countByKey()
+    step2
+
+  }
+
   /**
+   * Formats raw data from RDD to JSON.
+   *
+   * @param region Region to obtain coverage for
+   * @param binning Tells what granularity of coverage to return. Used for large regions
+   * @return JSONified data map;
+   */
+  def getJson(region: ReferenceRegion,
+              showGenotypes: Boolean,
+              binning: Int = 1): Map[String, String] = {
+
+    val data: RDD[(String, VariantContext)] = get(region)
+
+    if (binning <= 1) {
+
+      val binnedData: RDD[(String, VariantContext)] =
+        if (binning <= 1) {
+          if (!showGenotypes)
+            data
+          //data.map(r => (r._1, GenotypeJson(r._2.variant, null)))
+          else data
+        } else {
+
+          bin(data, binning)
+            .map(r => {
+              // Reset variant to match binned region
+              //r._1
+              val start = r._1._2.start
+
+              val binned: VariantContext = r.copy()._2
+              //binned.position.start = start
+              binned.variant.variant.setStart(start)
+              binned.variant.variant.setEnd(Math.max(r._2.variant.variant.getEnd, start + binning))
+              binned.variant.variant.setReferenceAllele(variantPlaceholder)
+              binned.variant.variant.setAlternateAllele(variantPlaceholder)
+
+              (r._1._1, binned)
+
+            })
+
+          //data
+
+        }
+
+      stringify(binnedData)
+    } else {
+      println("## Here in binning > 1")
+      val featuresBinsStep1: collection.Map[(String, ReferenceRegion), Long] = binVars(data, binning)
+      println("### count featureBinsStep1:" + featuresBinsStep1.size)
+
+      val featureBins: Seq[(String, Feature)] = featuresBinsStep1.toSeq
+        .map(r => {
+          val binned = new Feature()
+          binned.setContigName(r._1._2.referenceName)
+          binned.setStart(r._1._2.start)
+          binned.setEnd(r._1._2.end)
+          binned.setScore(r._2.toDouble)
+          (r._1._1, binned)
+        })
+
+      println("### count featureBins:" + featureBins.size)
+
+      stringifyFeature(featureBins)
+      /*
+      println("### count featureBins:" + featureBins.size)
+
+      //stringify feature
+      val step2: collection.Map[String, String] = featureBins.map(x => {
+        /* val featureString = x._2.getEnd.toString + " count: " + x._2.getScore.toString
+        println("#featureString:" + featureString) */
+        //val featureString = GA4GHConverter.toGA4GHFeature(x._2)
+        (x._1, featureString)
+      })
+      println("### step2.tomap: " + step2.toMap)
+      step2.toMap  */
+
+    }
+
+  }
+
+  // RDD[(String, VariantContext)])
+
+  /* old get JSON
+    /**
    * Formats raw data from RDD to JSON.
    *
    * @param region Region to obtain coverage for
@@ -127,22 +242,29 @@ class VariantContextMaterializationGA4GH(@transient sc: SparkContext,
         //data.map(r => (r._1, GenotypeJson(r._2.variant, null)))
         else data
       } else {
-        data /*
+
         bin(data, binning)
           .map(r => {
             // Reset variant to match binned region
             val start = r._1._2.start
-            val binned = Variant.newBuilder(r._2.variant)
-              .setStart(start)
-              .setEnd(Math.max(r._2.variant.getEnd, start + binning))
-              .setReferenceAllele(variantPlaceholder)
-              .setAlternateAllele(variantPlaceholder)
-              .build()
-            (r._1._1, GenotypeJson(binned))
-          }) */
+
+            val binned: VariantContext = r.copy()._2
+            //binned.position.start = start
+            binned.variant.variant.setStart(start)
+            binned.variant.variant.setEnd(Math.max(r._2.variant.variant.getEnd, start + binning))
+            binned.variant.variant.setReferenceAllele(variantPlaceholder)
+            binned.variant.variant.setAlternateAllele(variantPlaceholder)
+
+            (r._1._1, binned)
+
+          })
+
+        //data
+
       }
     stringify(binnedData)
   }
+  */
 
   /**
    * Gets all SampleIds for all genotypes in each file. If no genotypes are available, will return an empty sequence.
