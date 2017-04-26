@@ -156,13 +156,14 @@ abstract class LazyMaterialization[T: ClassTag](name: String,
     val seqRecord = sd(region.referenceName)
     seqRecord match {
       case Some(_) => {
-        val regionsOpt = bookkeep.getMissingRegions(region, files)
+        val regionsOpt: Option[List[ReferenceRegion]] = bookkeep.getMissingRegions(region, files)
         if (regionsOpt.isDefined) {
           for (r <- regionsOpt.get) {
             put(r)
           }
         }
-        intRDD.filterByInterval(region).toRDD.map(_._2)
+        val x: RDD[(String, T)] = intRDD.filterByInterval(region).toRDD.map(_._2)
+        x
       } case None => {
         throw new Exception(s"${region} not found in dictionary")
       }
@@ -193,13 +194,14 @@ abstract class LazyMaterialization[T: ClassTag](name: String,
       // do we need to modify the chromosome prefix?
       val hasChrPrefix = seqRecord.get.name.startsWith("chr")
 
-      val data =
+      val data: RDD[(ReferenceRegion, (String, T))] =
         // get data for all samples
         files.map(fp => {
-          val k = LazyMaterialization.filterKeyFromFile(fp)
+          val k: String = LazyMaterialization.filterKeyFromFile(fp)
           load(fp, Some(region)).map(v => (k, v))
         }).reduce(_ union _).map(r => {
-          val region = LazyMaterialization.modifyChrPrefix(getReferenceRegion(r._2), hasChrPrefix)
+          val region: ReferenceRegion = LazyMaterialization.modifyChrPrefix(getReferenceRegion(r._2), hasChrPrefix)
+          val z: (String, T) = r
           (region, (r._1, setContigName(r._2, region.referenceName)))
         })
 
