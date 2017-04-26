@@ -83,6 +83,7 @@ class CoverageMaterialization(@transient sc: SparkContext,
         bin(data, binning)
           .map(r => {
             // map to bin start, bin end
+            println("## In binning Coverge")
             val start = r._1._2.start
             val end = Math.max(r._2.end, start + binning)
             (r._1._1, PositionCount(start, end, r._2.count.toInt))

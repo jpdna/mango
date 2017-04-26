@@ -34,8 +34,9 @@ import org.kohsuke.args4j.{ Argument, Option => Args4jOption }
 import org.scalatra._
 //import ga4gh.VariantServiceOuterClass.SearchVariantsRequest
 
-import org.bdgenomics.mango.core.util.GA4GHutils
+//import org.bdgenomics.mango.core.util.GA4GHutils
 import org.bdgenomics.mango.core.util.SearchVariantsRequestGA4GH
+import org.bdgenomics.mango.core.util.SearchVariantsRequestGA4GHBinning
 
 object VizTimers extends Metrics {
   //HTTP requests
@@ -492,12 +493,73 @@ class VizServlet extends ScalatraServlet {
       contentType = "json"
 
       val dictOpt = VizReads.globalDict(viewRegion.referenceName)
+
+      if (dictOpt.isDefined) {
+        var results: Option[String] = None
+
+        /*
+        val binning: Int =
+          try {
+            //params("binning").toInt
+            searchVariantsRequest.binning.toInt
+          } catch {
+            case e: Exception => 1
+          }
+        */
+
+        val binning: Int = 1
+
+        VizReads.variantsWait.synchronized {
+          // region was already collected, grab from cache
+          if (VizCacheIndicator(viewRegion, binning) != VizReads.variantsIndicator) {
+            println("\n### About to call getJson in the cache thing\n")
+            VizReads.variantsCache = VizReads.variantContextDataGA4GH.get.getJson(viewRegion,
+              true,
+              binning)
+            println("### Done calling Json cache thing")
+            VizReads.variantsIndicator = VizCacheIndicator(viewRegion, binning)
+          }
+          println("#### about to call results")
+          results = VizReads.variantsCache.get(key)
+        }
+
+        if (results.isDefined) {
+
+          Ok(results.get)
+
+        } else VizReads.errors.noContent(viewRegion)
+      } else VizReads.errors.outOfBounds
+
+    }
+
+  }
+
+  post("/ga4gh/variants/search/binning") {
+
+    val jsonPostString = request.body
+
+    val searchVariantsRequestBinning: SearchVariantsRequestGA4GHBinning = net.liftweb.json.parse(jsonPostString)
+      .extract[SearchVariantsRequestGA4GHBinning]
+
+    if (!VizReads.variantsExist)
+      VizReads.errors.notFound
+    else {
+
+      val viewRegion = ReferenceRegion(searchVariantsRequestBinning.referenceName,
+        searchVariantsRequestBinning.start.toLong,
+        VizUtils.getEnd(searchVariantsRequestBinning.end.toLong,
+          VizReads.globalDict(searchVariantsRequestBinning.referenceName)))
+
+      val key: String = "ALL_chr17_7500000-7515000_phase3_shapeit2_mvncall_integrated_v5a_20130502_genotypes_vcf"
+      contentType = "json"
+
+      val dictOpt = VizReads.globalDict(viewRegion.referenceName)
       if (dictOpt.isDefined) {
         var results: Option[String] = None
         val binning: Int =
           try {
             //params("binning").toInt
-            searchVariantsRequest.binning.toInt
+            searchVariantsRequestBinning.binning.toInt
           } catch {
             case e: Exception => 1
           }
@@ -579,9 +641,9 @@ class VizServlet extends ScalatraServlet {
           var results: Option[String] = None
           VizReads.coverageWait.synchronized {
             // region was already collected, grab from cache
-            if (viewRegion != VizReads.coverageIndicator.region) {
+            if (VizCacheIndicator(viewRegion, binning) != VizReads.coverageIndicator) {
               VizReads.coverageCache = VizReads.coverageData.get.getCoverage(viewRegion, binning)
-              VizReads.coverageIndicator = VizCacheIndicator(viewRegion, 1)
+              VizReads.coverageIndicator = VizCacheIndicator(viewRegion, binning)
             }
             results = VizReads.coverageCache.get(key)
           }
