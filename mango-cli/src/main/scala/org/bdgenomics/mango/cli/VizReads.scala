@@ -19,13 +19,15 @@ package org.bdgenomics.mango.cli
 
 import java.net.URI
 import java.io.FileNotFoundException
+
 import net.liftweb.json.Serialization.write
 import net.liftweb.json._
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.models.{ ReferencePosition, ReferenceRegion, SequenceDictionary }
-import org.bdgenomics.mango.core.util.{ VizUtils, VizCacheIndicator }
+import org.bdgenomics.formats.avro.AlignmentRecord
+import org.bdgenomics.mango.core.util.{ VizCacheIndicator, VizUtils }
 import org.bdgenomics.mango.filters._
-import org.bdgenomics.mango.layout.{ PositionCount, BedRowJson, GenotypeJson }
+import org.bdgenomics.mango.layout.{ BedRowJson, GenotypeJson, PositionCount }
 import org.bdgenomics.mango.models._
 import org.bdgenomics.utils.cli._
 import org.bdgenomics.utils.instrumentation.Metrics
@@ -667,6 +669,8 @@ class VizReads(protected val args: VizReadsArgs) extends BDGSparkCommand[VizRead
       VizReads.genes = Some(args.genePath)
     }
 
+    //VizReads.materializer.getReads().get.initializePartitionedData()
+
     // start server
     if (!args.testMode) {
       if (args.debugFrontend)
@@ -845,7 +849,10 @@ class VizReads(protected val args: VizReadsArgs) extends BDGSparkCommand[VizRead
     VizReads.server.start()
 
     // warm up reads data by doing small query to force one-time dataset partition discovery scan
-    VizReads.readsCache = VizReads.materializer.getReads().get.getJson(ReferenceRegion("chr1", 20000000L, 20000100L))
+    //VizReads.readsCache = VizReads.materializer.getReads().get.getJson(ReferenceRegion("chr1", 20000000L, 20000100L))
+    //val x: (ReferenceRegion, (String, AlignmentRecord)) = VizReads.materializer.getReads().get.intRDD.first()
+    //val y: AlignmentRecordMaterialization = VizReads.materializer.getReads().get
+    VizReads.materializer.getReads().get.initializePartitionedData()
 
     println("View the visualization at: " + args.port)
     println("Quit at: /quit")

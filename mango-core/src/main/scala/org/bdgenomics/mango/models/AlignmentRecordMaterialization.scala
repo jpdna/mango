@@ -142,6 +142,11 @@ class AlignmentRecordMaterialization(@transient sc: SparkContext,
       .setAlignments(data.toList)
       .build().toString
   }
+
+  def initializePartitionedData(): Unit = {
+    val x: (ReferenceRegion, (String, AlignmentRecord)) = intRDD.first()
+    Unit
+  }
 }
 
 object AlignmentRecordMaterialization extends Logging {
@@ -249,4 +254,5 @@ object AlignmentRecordMaterialization extends Logging {
       }
     }
   }
+
 }
