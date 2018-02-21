@@ -199,7 +199,7 @@ object VariantContextMaterialization {
    */
   def loadAdam(sc: SparkContext, fp: String, regions: Option[Iterable[ReferenceRegion]]): VariantContextRDD = {
 
-    val variantContext = if (sc.isPartitioned(fp)) {
+    val variantContext = if ( /*sc.isPartitioned(fp)*/ true) {
 
       // finalRegions includes contigs both with and without "chr" prefix
       val finalRegions: Iterable[ReferenceRegion] = regions.get ++ regions.get
@@ -221,7 +221,7 @@ object VariantContextMaterialization {
       }
 
       val maybeFiltered: GenotypeRDD = if (finalRegions.nonEmpty) {
-        data.filterByOverlappingRegions(finalRegions, optPartitionedLookBackNum = Some(1))
+        data.filterByOverlappingRegions(finalRegions)
       } else data
 
       maybeFiltered.toVariantContexts()
