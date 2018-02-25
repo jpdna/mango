@@ -199,7 +199,7 @@ object VariantContextMaterialization {
    */
   def loadAdam(sc: SparkContext, fp: String, regions: Option[Iterable[ReferenceRegion]]): VariantContextRDD = {
 
-    val variantContext = if ( /*sc.isPartitioned(fp)*/ true) {
+    val variantContext = if (sc.isPartitioned(fp)) {
 
       // finalRegions includes contigs both with and without "chr" prefix
       val finalRegions: Iterable[ReferenceRegion] = regions.get ++ regions.get

@@ -221,7 +221,7 @@ object AlignmentRecordMaterialization extends Logging {
   def loadAdam(sc: SparkContext, fp: String, regions: Option[Iterable[ReferenceRegion]]): AlignmentRecordRDD = {
 
     AlignmentTimers.loadADAMData.time {
-      val alignmentRecordRDD: AlignmentRecordRDD = if (true) /*sc.isPartitioned(fp))*/ {
+      val alignmentRecordRDD: AlignmentRecordRDD = if (sc.isPartitioned(fp)) {
 
         // finalRegions includes contigs both with and without "chr" prefix
         val finalRegions: Iterable[ReferenceRegion] = regions.get ++ regions.get
